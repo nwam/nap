@@ -101,10 +101,13 @@ end
 class Event
 
   def initialize(actions, freq, freq_rand, message)
-    @actions = actions         # array of Actions
-    @frequency = freq          # event frequency
-    @frequency_rand = freq_rand
-    @message = message         # message to print when performing event
+    @actions = actions          # array of Actions
+    @freq = freq                # event frequency
+    @freq_rand = freq_rand
+    @message = message          # message to print when performing event
+
+    @last_performed = 0
+    reset_wait
   end
 
   # perform all actions
@@ -113,7 +116,17 @@ class Event
     @actions.each do |action|
       action.perform
     end
+
+    reset_wait
+    @last_performed = Time.now
   end
+
+  # resets the wait time, getting a new value in the frequency range
+  def reset_wait
+      @wait = @freq + rand(@freq_rand)
+  end
+
+  attr_reader :last_performed, :wait
 
 end
 
@@ -122,8 +135,6 @@ end
 # manages and runs all of the events
 class EventWizard
 end
-
-
 # -------------MAIN-------------
 
 # set up syslogger
