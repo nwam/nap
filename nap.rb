@@ -11,6 +11,7 @@ HOUR   = 60*MINUTE
 DAY    = 24*HOUR
 
 
+
 # --------Settings------------
 # settings loads and holds all the info from external files
 class Settings
@@ -34,6 +35,7 @@ class Settings
   # getter methods
   attr_reader :username, :password
 end
+
 
 
 # -----------Action-------------
@@ -96,6 +98,7 @@ class Action
 end
 
 
+
 # ----------Event------------
 # events are an ordered group of http_actions
 class Event
@@ -103,10 +106,10 @@ class Event
   def initialize(actions, freq, freq_rand, message)
     @actions = actions          # array of Actions
     @freq = freq                # event frequency
-    @freq_rand = freq_rand
+    @freq_rand = freq_rand      # maximum random time to add to frequency
     @message = message          # message to print when performing event
 
-    @last_performed = 0
+    @last_performed = Time.at(0)  # last time the event was performed
     reset_wait
   end
 
@@ -131,18 +134,56 @@ class Event
 end
 
 
+
 # ----------EventWizard---------
 # manages and runs all of the events
 class EventWizard
+
+  def initialize()
+    @events = []
+  end
+      min_wait = 24*HOUR
+
+  # main EventWizard function. 
+  # Performs events when their wait times are exceeded
+  def run
+    $log.info "Starting Event Wizard"
+    loop do
+      # reset variables
+      min_wait = 30*DAY
+
+      # perform overdue events; get min_wait time
+      @events.each do |event|
+        event.perform if Time.now - event.last_performed >= event.wait
+        min_wait = event.wait if event.wait < min_wait
+      end
+
+      # sleep until another event is ready
+      $log.info "Sleeping for #{min_wait/MINUTE} minutes"
+      sleep min_wait
+    end
+  end
+
+  def add(event)
+    @events << event
+  end
+
 end
+
+
+
 # -------------MAIN-------------
 
 # set up syslogger
 $log = Syslogger.new("nap", Syslog::LOG_PERROR | Syslog::LOG_PID | Syslog::LOG_NDELAY, Syslog::LOG_USER)
 $log.level = Logger::DEBUG
 
+# create an Event Wizard
+ew = EventWizard.new
+
 # load Settings
 settings = Settings.new
+$log.info "Setting up Events"
 
 # login/logout Actions
 login  = Action.new("http://www.neopets.com/login.phtml", nil, "username=#{settings.username}&password=#{settings.password}")
@@ -152,5 +193,7 @@ logout = Action.new("http://www.neopets.com/logout.phtml", nil, nil)
 buy_sc0 = Action.new("http://www.neopets.com/winter/kiosk.phtml", nil, nil)
 buy_sc1 = Action.new("http://www.neopets.com/winter/process_kiosk.phtml", "http://www.neopets.com/winter/kiosk.phtml", nil)
 buy_sc  = Event.new( [login, buy_sc0, buy_sc1, logout], 6*HOUR, 2*HOUR, "Buying winter scratchcard")
+ew.add(buy_sc)
 
-buy_sc.perform
+# run the EventWizard
+ew.run
