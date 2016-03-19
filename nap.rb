@@ -42,18 +42,25 @@ end
 # http_action is an http GET or POST bound to a specific url
 class Action
 
-  def initialize(url, ref, post)
+  def initialize(url, ref, post, user = nil, pass = nil)
     @url = url
     @ref = ref
     @post = post
     @type = post.nil? ? "get" : "post"
     @res = ""
+
+    if user!=nil && pass!=nil then
+        @type = "login"
+        @@username = user
+        @@password = pass
+    end
   end
 
   # perform http request
   def perform
-    post if @type == "post"
-    get  if @type == "get"
+    post  if @type == "post"
+    get   if @type == "get"
+    login if @type == "login"
   end
 
   # http POST which posts @post to @url reffered from @ref
@@ -67,7 +74,6 @@ class Action
       curl.headers["Referer"] = @ref
       curl.enable_cookies = true
       curl.cookiefile = COOKIE
-      curl.cookiejar  = COOKIE
       curl.follow_location = true
     end
 
@@ -84,16 +90,21 @@ class Action
       curl.headers["Referer"] = @ref
       curl.enable_cookies = true
       curl.cookiefile = COOKIE
-      curl.cookiejar  = COOKIE
       curl.follow_location = true
     end
 
     @res = c.body_str
   end
 
+  #logs in using a C program because Ruby is not fetching the right cookie
+  def login
+      $log.debug "Logging in" 
+      `./nplogin #{@@username} #{@@password}`
+  end
+
   # getter method for @res and make post and get private
   attr_reader :res
-  private :post, :get
+  private :post, :get, :login
 
 end
 
@@ -186,7 +197,7 @@ settings = Settings.new
 $log.info "Setting up Events"
 
 # login/logout Actions
-login  = Action.new("http://www.neopets.com/login.phtml", nil, "username=#{settings.username}&password=#{settings.password}")
+login  = Action.new("http://www.neopets.com/login.phtml", nil, nil, settings.username, settings.password)
 logout = Action.new("http://www.neopets.com/logout.phtml", nil, nil)
 
 # buy scratchcard Event
