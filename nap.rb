@@ -255,8 +255,9 @@ ew.add(sc)
 ds0 = Action.new("http://www.neopets.com/dailyslots/slotgame.phtml", 
                  "http://www.neopets.com/index.phtml", nil)
 ds1 = Action.new("http://www.neopets.com/dailyslots/ajax/claimprize.php", 
-                 "http://www.neopets.com/index.phtml", nil)
-ds  = Event.new( [login, ds0, ds1], 24*HOUR, 12*HOUR, "Spinning daily slots")
+                 "http://www.neopets.com/index.phtml",
+                 "action=beginroll")
+ds  = Event.new( [login, ds0, ds1], 24*HOUR, 8*HOUR, "Spinning daily slots")
 ew.add(ds)
 
 # coltzan's shrine **TESTED
@@ -267,6 +268,12 @@ cs1 = Action.new("http://www.neopets.com/desert/shrine.phtml",
 cs = Event.new( [login, cs0, cs1], 12*HOUR, 4*HOUR, "Approaching the Shrine")
 ew.add(cs)
 
+# underwater fishing **TESTED
+uf0 = Action.new("http://www.neopets.com/water/fishing.phtml", nil, nil)
+uf1 = Action.new("http://www.neopets.com/water/fishing.phtml", 
+                 "http://www.neopets.com/water/fishing.phtml",
+                 "go_fish=1")
+uf = Event.new( [login, uf0, uf1], 6*HOUR, 6*HOUR, "Fishing Underwater")
 
 ### Daylies ###
 # anchor management
@@ -276,6 +283,13 @@ am1 = Action.new("http://www.neopets.com/pirates/anchormanagement.phtml",
                  "http://www.neopets.com/pirates/anchormanagement.phtml", 
                  "action=ee7db8437176cc0e8c6563742228ba16")
 am = Event.new( [am0, am1], 0, 0, "Managing an Anchor")
+
+# bank interest
+bi0 = Action.new("http://www.neopets.com/bank.phtml", nil, nil)
+bi1 = Action.new("http://www.neopets.com/bank.phtml",
+                 "http://www.neopets.com/bank.phtml",
+                 "type=interest")
+bi = Event.new( [bi0, bi1], 0, 0, "Collecting bank interest")
 
 # tombola
 tb0 = Action.new("http://www.neopets.com/island/tombola.phtml", nil, nil)
@@ -288,18 +302,41 @@ tb = Event.new( [tb0, tb1], 0, 0, "Playing Tombola")
 fm0 = Action.new("http://www.neopets.com/desert/fruitmachine.phtml", nil, nil)
 fm1 = Action.new("http://www.neopets.com/desert/fruit/index.phtml", 
                  "http://www.neopets.com/desert/fruit/index.phtml",
-                 "spin=1&ck=ee7db8437176cc0e8c6563742228ba16")
+                 "spin=1")
 fm = Event.new( [fm0, fm1], 0, 0, "Spinning the Fruit Machine")
 
+# blue plushie **TESTED
+bp0 = Action.new("http://www.neopets.com/faerieland/tdmbgpop.phtml", nil, nil)
+bp1 = Action.new("http://www.neopets.com/faerieland/tdmbgpop.phtml",
+                 "http://www.neopets.com/faerieland/tdmbgpop.phtml",
+                 "talkto=1")
+bp = Event.new( [bp0, bp1], 0, 0, "Talking to blue plushie")
+
+# giant omelette **TESTED
+go0 = Action.new("http://www.neopets.com/prehistoric/omelette.phtml", nil, nil)
+go1 = Action.new("http://www.neopets.com/prehistoric/omelette.phtml",
+                 "http://www.neopets.com/prehistoric/omelette.phtml",
+                 "type=get_omelette")
+go = Event.new( [go0, go1], 0, 0, "Grabbing some omelette")
+
+# giant jelly **TESTED
+gj0 = Action.new("http://www.neopets.com/jelly/jelly.phtml", nil, nil)
+gj1 = Action.new("http://www.neopets.com/jelly/jelly.phtml",
+                 "http://www.neopets.com/jelly/jelly.phtml",
+                 "type=get_jelly")
+gj = Event.new( [gj0, gj1], 0, 0, "Collecting jelly/jelly interest")
+
 # all dailies
-dailies = DailyEvent.new( [am, tb, fm], 12*HOUR, 8*HOUR, "Performing all dailies")
+dailies = DailyEvent.new( [login, bp, go, gj], 12*HOUR, 8*HOUR, "Performing all dailies")
 ew.add(dailies)
 
 # run the EventWizard
 # ew.run
+
+# testing stuff
 login.perform
-fm0.perform
-test = fm1
+gj0.perform
+test = gj1
 test.perform
 
 f = File.open("poo_header","w")
